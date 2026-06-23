@@ -66,7 +66,8 @@ def run_episode(
             is_alive=True,
             has_arrow=True,
         )
-        print(f"\nTURN 0 (initial state)")
+        print(f"\n\n{'-' * 60}")
+        print("INITIAL STATE")
         visualizer.render(
             initial_state,
             percept,
@@ -112,7 +113,8 @@ def run_episode(
                 is_alive=current_state.is_alive,
                 has_arrow=current_state.has_arrow,
             )
-            print(f"\n\nTURN {turns - 1} --> TURN {turns}: Agent takes {action.name.upper()}")
+            print(f"\n\n{'-' * 60}")
+            print(f"TURN {turns - 1} --> TURN {turns}: Agent takes {action.name.upper()}")
             death_cause = None if environment.is_agent_alive() else environment.get_death_cause()
             visualizer.render(
                 display_state,

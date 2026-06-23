@@ -77,8 +77,7 @@ class Visualizer:
             status = f"Dead (killed by {death_cause})"
         else:
             status = "Dead"
-        print(f"{'-' * 60}")
-        print(f"Turn {turn} | Status: {status} | Position: {agent_state.position}")
+        print(f"TURN {turn} | Status: {status} | Position: {agent_state.position}")
         print(f"{'-' * 60}")
         
         # Grid display
