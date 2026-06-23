@@ -13,41 +13,8 @@ TODO: Implement test methods
 import pytest
 from wumpus import Percept, WumpusWorld, Position
 
-
-class TestPerceptStructure:
-    """Tests for the Percept dataclass."""
-
-    def test_percept_has_all_fields(self):
-        """
-        Test that Percept has all required fields.
-        
-        Required fields:
-        - stench: bool
-        - breeze: bool
-        - glitter: bool
-        - bump: bool
-        - scream: bool
-        - reward: float
-        
-        TODO: Implement
-        """
-        pass
-
-    def test_percept_default_values(self):
-        """
-        Test that Percepts default to no sensing (False) and zero reward.
-        
-        TODO: Implement
-        """
-        pass
-
-    def test_percept_can_be_created(self):
-        """
-        Test that Percept objects can be instantiated.
-        
-        TODO: Implement
-        """
-        pass
+# Note: Percept structure tests have been moved to test_models.py
+# This file contains only behavioral tests for sensing and reward computation.
 
 
 class TestSensing:

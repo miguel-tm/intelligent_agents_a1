@@ -39,8 +39,8 @@ class Direction(Enum):
         
         TODO: Implement turn_left logic (rotate counter-clockwise)
         """
-        # TODO: Implement
-        pass
+        # Rotate counter-clockwise: EAST->NORTH->WEST->SOUTH->EAST
+        return Direction((self.value - 1) % 4)
 
     def turn_right(self) -> "Direction":
         """
@@ -48,8 +48,8 @@ class Direction(Enum):
         
         TODO: Implement turn_right logic (rotate clockwise)
         """
-        # TODO: Implement
-        pass
+        # Rotate clockwise: EAST->SOUTH->WEST->NORTH->EAST
+        return Direction((self.value + 1) % 4)
 
     def get_forward_position(self, current_pos: "Position") -> "Position":
         """
@@ -63,8 +63,18 @@ class Direction(Enum):
             
         TODO: Implement forward position calculation based on direction
         """
-        # TODO: Implement
-        pass
+        # Move one step in the direction
+        # Grid coordinate system: x increases right, y increases down
+        if self == Direction.NORTH:
+            return Position(current_pos.x, current_pos.y - 1)
+        elif self == Direction.SOUTH:
+            return Position(current_pos.x, current_pos.y + 1)
+        elif self == Direction.EAST:
+            return Position(current_pos.x + 1, current_pos.y)
+        elif self == Direction.WEST:
+            return Position(current_pos.x - 1, current_pos.y)
+        else:
+            raise ValueError(f"Unknown direction: {self}")
 
 
 class Action(Enum):
@@ -116,8 +126,7 @@ class Position:
             
         TODO: Implement bounds checking
         """
-        # TODO: Implement
-        pass
+        return 0 <= self.x < width and 0 <= self.y < height
 
     def __eq__(self, other: object) -> bool:
         """Check if two positions are identical."""
