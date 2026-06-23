@@ -1,20 +1,16 @@
 """
 Main entry point for the Wumpus World simulator.
 
-This script demonstrates running a single episode of the Wumpus World with
-a NaiveAgent. It serves as a template for running experiments or testing.
+This script runs multiple episodes of the Wumpus World with a NaiveAgent baseline.
 
 Usage:
-    python main.py
+    python main.py              # Run 5 episodes (default)
+    python main.py --verbose    # Run with per-turn visualization
 
 Output:
-    - Agent decisions and percepts for each turn
-    - Final score and episode summary
-    - Statistics about the episode (turns taken, actions performed, etc.)
-
-TODO: Implement game loop
-TODO: Integrate visualization
-TODO: Add command-line arguments for configuration
+    - Per-episode summary: steps, reward, gold collected, status
+    - Aggregate statistics: escape rate, death rate, avg reward, avg steps
+    - Optional: Per-turn grid visualization and percepts (with --verbose)
 """
 
 from wumpus import WumpusWorld, Visualizer
@@ -47,8 +43,6 @@ def run_episode(
         - gold_collected: Whether agent found gold
         - escaped: Whether agent escaped with/without gold
         - died: Whether agent died
-        
-    TODO: Implement episode loop
     """
     # Initialize episode
     environment.reset()
@@ -134,17 +128,17 @@ def main() -> None:
     
     Default behavior:
     - Create a 4x4 Wumpus World with standard configuration
-    - Run a NaiveAgent in the environment
-    - Display output (optional visualization)
+    - Run a NaiveAgent in the environment (5 episodes)
+    - Display output (optional visualization with --verbose)
     - Print final statistics
     
-    TODO: Implement main game loop
-    TODO: Add command-line argument parsing for:
-        - World size
-        - Pit probability
-        - Number of episodes
-        - Agent type selection
-        - Visualization on/off
+    Future enhancement:
+    - Add full command-line argument parsing for:
+        - World size (--world-size N)
+        - Pit probability (--pit-prob P)
+        - Number of episodes (--episodes E)
+        - Agent type selection (--agent-type TYPE)
+        - Visualization control (--no-visualization)
     """
     # Parse command-line arguments
     verbose = "--verbose" in sys.argv

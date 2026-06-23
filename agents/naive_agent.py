@@ -29,9 +29,6 @@ class NaiveAgent(Agent):
     Note:
         This agent's behavior is completely stateless (aside from the required
         interface). It does not remember anything about previous percepts.
-    
-    TODO: Implement get_action() to return a random action
-    TODO: Implement reset() to prepare for a new episode
     """
 
     def __init__(self):
@@ -47,8 +44,6 @@ class NaiveAgent(Agent):
             
         Returns:
             A randomly selected action
-            
-        TODO: Implement random action selection from Action enum values
         """
         return random.choice(list(Action))
 
@@ -58,7 +53,5 @@ class NaiveAgent(Agent):
         
         For the NaiveAgent, this is a no-op since it has no internal state.
         It's implemented to satisfy the Agent interface.
-        
-        TODO: Implement (can be empty for this stateless agent)
         """
         pass

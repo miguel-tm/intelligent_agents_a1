@@ -31,8 +31,6 @@ class Visualizer:
     Note:
         The visualizer respects the agent's information constraints and only
         displays information the agent can perceive or deduce.
-    
-    TODO: Implement grid rendering, symbol drawing, and formatted output
     """
 
     def __init__(self, width: int, height: int):
@@ -69,8 +67,6 @@ class Visualizer:
         - Current position and inventory
         - Current percepts
         - Game status
-        
-        TODO: Implement grid rendering and formatting
         """
         # Header with turn and status
         status = "Alive" if alive else "Dead"
@@ -97,8 +93,6 @@ class Visualizer:
         
         Returns:
             Formatted grid as a string
-            
-        TODO: Implement grid drawing
         """
         lines = ["+" + "-" * (self.width * 2 + 1) + "+"]
         
@@ -124,11 +118,7 @@ class Visualizer:
         return "\n".join(lines)
 
     def _direction_symbol(self, direction: Direction) -> str:
-        """
-        Get the symbol representing a direction.
-        
-        TODO: Implement direction to symbol conversion
-        """
+        """Get the symbol representing a direction."""
         direction_symbols = {
             Direction.NORTH: "^",
             Direction.SOUTH: "v",
@@ -138,14 +128,7 @@ class Visualizer:
         return direction_symbols.get(direction, "?")
 
     def _render_percepts(self, percept: Percept) -> str:
-        """
-        Format percepts into a readable string.
-        
-        Returns:
-            String like "Stench, Breeze, Glitter" or "No percepts"
-            
-        TODO: Implement percept formatting
-        """
+        """Format percepts into a readable string."""
         percepts = []
         if percept.stench:
             percepts.append("Stench")
