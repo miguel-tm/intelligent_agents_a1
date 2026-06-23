@@ -184,7 +184,7 @@ class WumpusWorld:
                 if self._check_death_condition(self._agent_pos):
                     self._agent_dead = True
                     self._episode_ended = True
-                    reward = -10
+                    reward = -1000  # Death penalty (pit or wumpus)
             else:
                 bump = True
         
@@ -197,35 +197,47 @@ class WumpusWorld:
         elif action == Action.SHOOT:
             if not self._arrow_used:
                 self._arrow_used = True
+                reward = -11  # Time cost (-1) + arrow penalty (-10)
                 # Check if arrow hits wumpus
                 if self._wumpus_in_direction(self._agent_direction):
                     self._wumpus_pos = None  # Wumpus is dead
                     scream = True
-                    reward = 0  # No reward for killing wumpus
         
         elif action == Action.GRAB:
             if self._agent_pos == self._gold_pos:
                 self._gold_pos = None  # Gold picked up
-                reward = 1
+                reward = -1  # No bonus; only time cost
         
         elif action == Action.CLIMB:
             if self._is_start_position(self._agent_pos):
-                # Can climb out at [1,1]
-                self._episode_ended = True
+                # Agent is at start position [1,1]
                 if self._gold_pos is None:
-                    # Agent had gold
+                    # Agent has gold: successful escape!
+                    self._episode_ended = True
                     reward = 1000
                 elif self.allow_climb_without_gold:
-                    reward = 0
-                else:
-                    reward = -1  # Just time penalty
-            # else: climb fails silently, no effect
+                    # No gold, but allowed to climb
+                    self._episode_ended = True
+                    reward = -1  # Only time cost
+                # else: No gold and not allowed—climb fails silently, no effect
+            # else: Not at start position—climb fails silently, no effect
         
         # Generate percept at current position
-        percept = self.get_percepts_at(self._agent_pos)
-        percept.bump = bump
-        percept.scream = scream
-        percept.reward = reward
+        if action == Action.CLIMB and self._episode_ended:
+            # Special percept when exiting cave
+            percept = Percept(
+                stench=False,
+                breeze=False,
+                glitter=(self._gold_pos is None),  # True if agent picked up gold
+                bump=False,
+                scream=scream,
+                reward=reward
+            )
+        else:
+            percept = self.get_percepts_at(self._agent_pos)
+            percept.bump = bump
+            percept.scream = scream
+            percept.reward = reward
         
         return percept, self._episode_ended
 

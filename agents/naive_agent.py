@@ -50,8 +50,7 @@ class NaiveAgent(Agent):
             
         TODO: Implement random action selection from Action enum values
         """
-        # TODO: Implement - return random.choice(list(Action))
-        pass
+        return random.choice(list(Action))
 
     def reset(self) -> None:
         """
@@ -62,5 +61,4 @@ class NaiveAgent(Agent):
         
         TODO: Implement (can be empty for this stateless agent)
         """
-        # TODO: Implement
         pass
