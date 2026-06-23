@@ -105,7 +105,10 @@ class Visualizer:
             row = "| "
             for x in range(self.width):
                 # Check if agent is at this position
-                if agent_state.position.x == x and agent_state.position.y == y:
+                # Note: agent_state.position is in user coordinates [1,1] to [4,4]
+                # Loop variables x,y are array indices [0,0] to [3,3]
+                # Convert user coords to array indices by subtracting 1
+                if agent_state.position.x - 1 == x and agent_state.position.y - 1 == y:
                     # Draw agent with direction symbol
                     row += self._direction_symbol(agent_state.direction)
                 else:
