@@ -1,15 +1,14 @@
-# 📊 Wumpus World Simulator - Assignment 1
+# Wumpus World Simulator - Assignment 1
 
 **University of Toronto - Intelligent Agents Course**  
 **Student:** Miguel Morales (@miguelmog10)
 
 ---
 
-## 🎯 Project Purpose
+## Project Details
 
-This project implements a **Wumpus World environment simulator** in Python using object-oriented design principles. The simulator is a classic AI problem that challenges agents to navigate a grid-based world, avoid hazards, and find treasure while operating under imperfect information.
+This project implements a **Wumpus World environment simulator** in Python using object-oriented design principles.
 
-### Assignment Scope
 This is **Assignment 1 only**. It establishes the foundation for a clean, extensible Wumpus World implementation suitable for future assignments on agent learning and planning.
 
 ### Core Components
@@ -46,9 +45,11 @@ intelligent_agents_a1/
 │   └── naive_agent.py            # NaiveAgent (random action selection)
 │
 └── tests/                         # Test suite
-    ├── test_environment.py        # Tests for WumpusWorld
-    ├── test_actions.py            # Tests for action mechanics
-    └── test_percepts.py           # Tests for percept generation
+    ├── __init__.py                # Test package
+    ├── test_models.py             # Tests for Direction, Action, Position, Percept, AgentState
+    ├── test_environment.py        # Tests for WumpusWorld mechanics and actions
+    ├── test_percepts.py           # Tests for percept generation and rewards
+    └── test_actions.py            # Placeholder for action execution tests
 ```
 
 ### Module Responsibilities
@@ -64,7 +65,7 @@ intelligent_agents_a1/
 
 ---
 
-## 🏗️ Design Philosophy
+## Design Philosophy
 
 ### Object-Oriented Design
 - **Classes** model entities: `WumpusWorld`, `Agent`, `Percept`, `Position`, etc.
@@ -85,7 +86,7 @@ intelligent_agents_a1/
 
 ---
 
-## 🚀 How to Run
+## How to Run
 
 ### Prerequisites
 Ensure Python 3.8+ and dependencies are installed:
@@ -93,7 +94,7 @@ Ensure Python 3.8+ and dependencies are installed:
 pip install -r requirements.txt
 ```
 
-### Run a Single Episode
+### Run with summary statistics only (default)
 ```bash
 python main.py
 ```
@@ -103,7 +104,13 @@ This runs a standard game:
 - Random wumpus and gold placement
 - Pit probability of 0.2
 - NaiveAgent making random moves
-- Visualization (if implemented)
+- Visualization (ASCII grid) suppressed, only episode summaries printed
+
+### Run with per-turn visualization (grid display for each turn)
+```bash
+python main.py --verbose
+```
+- Visualization (ASCII grid) displayed for each turn
 
 ### Run Tests
 ```bash
@@ -120,11 +127,59 @@ Run a specific test file:
 pytest tests/test_environment.py -v
 ```
 
+## Game Output
+
+### Summary Mode (Default)
+Prints one-line summary per episode:
+```
+Episode  1: Steps=  8 | Reward=     -8 | Gold=False | TIMEOUT
+Episode  2: Steps= 21 | Reward=   -1063 | Gold=True  | DIED
+Episode  3: Steps= 15 | Reward=    -15 | Gold=False | TIMEOUT
+```
+
+### Verbose Mode (`--verbose`)
+Displays turn-by-turn grid and state:
+```
+  Turn 0 (initial state)
+
+Turn 0 | Status: Alive | Position: Position(x=1, y=1)
++---------+
+| . . . . |
+| . . . . |
+| . . . . |
+| > . . . |
++---------+
+Percepts: None
+Reward: 0, Total Reward: 0
+Inventory: Gold=False, Arrow=True
+
+  Turn 0 --> Turn 1: Agent takes FORWARD
+
+Turn 1 | Status: Alive | Position: Position(x=2, y=1)
++---------+
+| . . . . |
+| . . . . |
+| . . . . |
+| . > . . |
++---------+
+Percepts: Breeze
+Reward: -1, Total Reward: -1
+Inventory: Gold=False, Arrow=True
+```
+
+### Aggregate Statistics
+After all episodes:
+```
+Total Episodes: 5
+Successful Escapes: 1/5 (20.0%)
+Deaths: 2/5 (40.0%)
+Gold Collected: 2/5 (40.0%)
+Total Reward: -547
+Average Reward per Episode: -109.4
+Average Steps per Episode: 12.2
+```
+
 ---
-
-## 🎮 Game Mechanics
-
-### Standard Configuration
 - **Grid:** 4×4
 - **Start position:** [1,1] facing right (EAST)
 - **Pit probability:** 0.2 per non-start cell
@@ -159,50 +214,53 @@ Episodes end when:
 - **Agent shoots wumpus:** Wumpus is eliminated but episode continues
 - **Max turns exceeded:** Episode timeout (configurable)
 
-### Rewards (Baseline)
+### Rewards (Per Assignment Specification)
 - `-1` per action (time penalty)
-- `+1` for grabbing gold
-- `-10` for death
+- `-1` for grabbing gold (no bonus, only time cost)
+- `-11` for shooting arrow (-1 time cost + -10 arrow penalty)
+- `-1` for climbing without gold (when allowed)
+- `-1000` for death (pit or wumpus)
 - `+1000` for escaping with gold at [1,1]
-- `+500` for escaping with gold at [1,1] after many turns
-- Penalties adjusted by max turn limit
+- `0` for climbing without gold at [1,1] when not allowed (no effect)
 
 ---
 
 ## 📋 Implementation Status
 
-### ✅ Scaffolding Complete
+### ✅ Implementation Complete
 - [x] Class structure and module organization
 - [x] Comprehensive docstrings for all classes
 - [x] Type hints throughout
-- [x] TODO comments marking unimplemented logic
-- [x] Test skeleton with placeholders
-- [x] `__init__.py` files for clean imports
+- [x] **models.py:** Direction turn logic, Position validation ✅
+- [x] **environment.py:** World initialization, action execution, percept generation ✅
+- [x] **naive_agent.py:** Random action selection ✅
+- [x] **visualization.py:** Grid rendering with ASCII art, agent direction symbols, percept display ✅
+- [x] **main.py:** Game loop, episode management, visualization integration ✅
+- [x] **tests/:** 86 unit tests covering models, environment, and percepts ✅
+- [x] **pytest.ini:** Test configuration for proper module imports ✅
 
-### 🔧 Ready for Implementation
-- [ ] **models.py:** Direction turn logic, Position validation
-- [ ] **environment.py:** World initialization, action execution, percept generation
-- [ ] **naive_agent.py:** Random action selection
-- [ ] **visualization.py:** Grid rendering and output formatting
-- [ ] **main.py:** Game loop and episode management
-- [ ] **tests/:** Test method implementations
+**Total: 86/86 tests passing**
 
 ---
 
-## 🧪 Testing Strategy
+## Testing Strategy
 
 All tests follow this pattern:
 1. **Setup:** Create environment and agent
 2. **Execute:** Run actions or scenarios
 3. **Verify:** Assert expected state changes and percepts
 
-Test files include TODO placeholders for each test method. Implement tests incrementally as functionality is added.
+**Test Coverage:** 86 comprehensive tests covering:
+- **test_models.py** (55 tests): Direction logic, Position validation, Action enum, Percept structure
+- **test_environment.py** (22 tests): Environment initialization, movement, percept generation, episode termination
+- **test_percepts.py** (9 tests): Sensing accuracy, reward computation
+- **test_actions.py** (0 tests): Placeholder for future action-specific tests
 
-**Run tests often:** `pytest tests/ -v`
+**Run tests:** `pytest tests/ -v` or `pytest tests/ -q`
 
 ---
 
-## 📚 Key Files to Review
+## Key Files to Review
 
 **Start here:**
 - [wumpus/models.py](wumpus/models.py) — Data structure definitions
@@ -216,29 +274,6 @@ Test files include TODO placeholders for each test method. Implement tests incre
 
 ---
 
-## 🎓 Learning Outcomes
-
-By completing this assignment, you will:
-- Practice object-oriented design with Python dataclasses and enums
-- Understand the importance of separating environment from agent concerns
-- Learn how percept-based interfaces prevent hidden-state cheating
-- Build a foundation for intelligent agent algorithms
-- Work with type hints and comprehensive documentation
-- Structure code for extensibility and testing
-
----
-
-## 📝 Notes for Assignment 2+
-
-This scaffold is intentionally kept simple to support future extensions:
-- No belief tracking or memory structures (ready for agent learning)
-- No pathfinding or planning (ready for search algorithms)
-- Modular design supports multiple agent types
-- Environment logic independent of agent intelligence
-- Test infrastructure ready for new agent validation
-
----
-
-## 👥 Author
+##  Author
 **Miguel Morales** (@miguelmog10)  
 University of Toronto - Intelligent Agents Course
