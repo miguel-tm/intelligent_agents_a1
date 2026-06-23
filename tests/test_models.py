@@ -128,23 +128,25 @@ class TestDirection:
         """
         Test forward position when facing NORTH (moving up).
         
-        From [1, 2] facing NORTH, forward should be [1, 1]
+        From [1, 2] facing NORTH, forward should be [1, 3].
+        Mathematical coordinates: y increases upward.
         """
         pos = Position(1, 2)
         next_pos = Direction.NORTH.get_forward_position(pos)
         assert next_pos.x == 1
-        assert next_pos.y == 1
+        assert next_pos.y == 3
 
     def test_get_forward_position_facing_south(self):
         """
         Test forward position when facing SOUTH (moving down).
         
-        From [1, 1] facing SOUTH, forward should be [1, 2]
+        From [1, 2] facing SOUTH, forward should be [1, 1].
+        Mathematical coordinates: y decreases downward.
         """
-        pos = Position(1, 1)
+        pos = Position(1, 2)
         next_pos = Direction.SOUTH.get_forward_position(pos)
         assert next_pos.x == 1
-        assert next_pos.y == 2
+        assert next_pos.y == 1
 
     def test_get_forward_position_doesnt_modify_original(self):
         """Test that get_forward_position doesn't modify the original position."""

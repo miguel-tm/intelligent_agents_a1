@@ -64,11 +64,12 @@ class Direction(Enum):
         TODO: Implement forward position calculation based on direction
         """
         # Move one step in the direction
-        # Grid coordinate system: x increases right, y increases down
+        # Grid coordinate system: x increases right (EAST), y increases up (NORTH)
+        # Uses mathematical coordinates: [1,1] at bottom-left, [4,4] at top-right
         if self == Direction.NORTH:
-            return Position(current_pos.x, current_pos.y - 1)
-        elif self == Direction.SOUTH:
             return Position(current_pos.x, current_pos.y + 1)
+        elif self == Direction.SOUTH:
+            return Position(current_pos.x, current_pos.y - 1)
         elif self == Direction.EAST:
             return Position(current_pos.x + 1, current_pos.y)
         elif self == Direction.WEST:

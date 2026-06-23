@@ -3,6 +3,26 @@
 ## Objective
 Build a Python simulator for the Wumpus World environment and a NaiveAgent.
 
+## Coordinate System
+
+The grid uses **mathematical coordinates** (not screen coordinates):
+
+- **User Interface Display:**
+  - x ranges from 1 to width (left to right)
+  - y ranges from 1 to height (bottom to top)
+  - [1, 1] = bottom-left corner
+  - [4, 4] = top-right corner (for standard 4×4 grid)
+
+- **Internal Code:**
+  - For simplicity with array indexing, the environment code may use [0, 0] as the bottom-left corner
+  - All direction logic remains consistent with mathematical coordinates
+
+- **Direction Mapping:**
+  - NORTH: y increases (move toward top of grid)
+  - SOUTH: y decreases (move toward bottom of grid)
+  - EAST: x increases (move toward right of grid)
+  - WEST: x decreases (move toward left of grid)
+
 ## Functional Requirements
 - Configurable environment with:
   - width
