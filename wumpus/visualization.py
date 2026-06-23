@@ -70,8 +70,19 @@ class Visualizer:
         
         TODO: Implement grid rendering and formatting
         """
-        # TODO: Implement
-        pass
+        # Header with turn and status
+        status = "Alive" if alive else "Dead"
+        print(f"\n{'─' * 60}")
+        print(f"Turn {turn} | Status: {status} | Position: {agent_state.position}")
+        print(f"{'─' * 60}")
+        
+        # Grid display
+        print(self._draw_grid(agent_state))
+        
+        # Percepts and inventory
+        print(f"Percepts: {self._render_percepts(percept)}")
+        print(f"Reward: {percept.reward}")
+        print(f"Inventory: Gold={agent_state.has_gold}, Arrow={agent_state.has_arrow}")
 
     def _draw_grid(self, agent_state: AgentState) -> str:
         """
@@ -87,8 +98,25 @@ class Visualizer:
             
         TODO: Implement grid drawing
         """
-        # TODO: Implement
-        pass
+        lines = ["╔" + "═" * (self.width * 2 - 1) + "╗"]
+        
+        # Draw grid from top to bottom (y decreasing in display, but coordinates increase upward)
+        for y in range(self.height - 1, -1, -1):
+            row = "║ "
+            for x in range(self.width):
+                # Check if agent is at this position
+                if agent_state.position.x == x and agent_state.position.y == y:
+                    # Draw agent with direction symbol
+                    row += self._direction_symbol(agent_state.direction)
+                else:
+                    # Draw empty cell
+                    row += "."
+                row += " "
+            row += "║"
+            lines.append(row)
+        
+        lines.append("╚" + "═" * (self.width * 2 - 1) + "╝")
+        return "\n".join(lines)
 
     def _direction_symbol(self, direction: Direction) -> str:
         """
@@ -96,8 +124,13 @@ class Visualizer:
         
         TODO: Implement direction to symbol conversion
         """
-        # TODO: Implement
-        pass
+        direction_symbols = {
+            Direction.NORTH: "^",
+            Direction.SOUTH: "v",
+            Direction.EAST: ">",
+            Direction.WEST: "<",
+        }
+        return direction_symbols.get(direction, "?")
 
     def _render_percepts(self, percept: Percept) -> str:
         """
@@ -108,5 +141,19 @@ class Visualizer:
             
         TODO: Implement percept formatting
         """
-        # TODO: Implement
-        pass
+        percepts = []
+        if percept.stench:
+            percepts.append("Stench")
+        if percept.breeze:
+            percepts.append("Breeze")
+        if percept.glitter:
+            percepts.append("Glitter")
+        if percept.bump:
+            percepts.append("Bump")
+        if percept.scream:
+            percepts.append("Scream")
+        
+        if percepts:
+            return " | ".join(percepts)
+        else:
+            return "None"

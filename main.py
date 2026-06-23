@@ -19,7 +19,8 @@ TODO: Add command-line arguments for configuration
 
 from wumpus import WumpusWorld, Visualizer
 from agents import NaiveAgent
-from wumpus.models import Action
+from wumpus.models import Action, Percept
+import sys
 
 
 def run_episode(
@@ -49,8 +50,58 @@ def run_episode(
         
     TODO: Implement episode loop
     """
-    # TODO: Implement
-    pass
+    # Initialize episode
+    state = environment.reset()
+    agent.reset()
+    percept = Percept()  # Initial empty percept
+    
+    # Episode tracking
+    total_reward = 0
+    turns = 0
+    gold_collected = False
+    escaped = False
+    died = False
+    
+    # Main episode loop
+    while turns < max_turns:
+        # Agent decides action
+        action = agent.get_action(percept)
+        
+        # Environment executes action
+        percept, ended = environment.step(action)
+        total_reward += percept.reward
+        turns += 1
+        
+        # Optional visualization per turn
+        if verbose and visualizer is not None:
+            visualizer.render(state, percept, turn=turns, alive=environment.is_agent_alive())
+        
+        # Detect episode termination conditions
+        if percept.reward == 1000:  # Escaped with gold
+            escaped = True
+            gold_collected = True
+            break
+        elif percept.reward == -1000:  # Died (pit or wumpus)
+            died = True
+            break
+        elif percept.glitter and not gold_collected:  # Just grabbed gold
+            gold_collected = True
+        
+        if ended:
+            # Episode ended naturally
+            if percept.reward > 0:
+                escaped = True
+            elif percept.reward < -100:  # Death penalty
+                died = True
+            break
+    
+    return {
+        "total_reward": total_reward,
+        "turns_taken": turns,
+        "gold_collected": gold_collected,
+        "escaped": escaped,
+        "died": died,
+    }
 
 
 def main() -> None:
@@ -71,11 +122,77 @@ def main() -> None:
         - Agent type selection
         - Visualization on/off
     """
-    # TODO: Implement main function
-    print("Wumpus World Simulator - Assignment 1")
-    print("=" * 50)
-    print("TODO: Implement game loop and visualization")
-    print("=" * 50)
+    # Parse command-line arguments
+    verbose = "--verbose" in sys.argv
+    
+    # Game configuration
+    NUM_EPISODES = 5
+    WORLD_WIDTH = 4
+    WORLD_HEIGHT = 4
+    PIT_PROBABILITY = 0.2
+    ALLOW_CLIMB_WITHOUT_GOLD = True
+    
+    # Header
+    print("\n" + "=" * 70)
+    print("WUMPUS WORLD SIMULATOR - Assignment 1")
+    print("=" * 70)
+    print(f"Configuration: {WORLD_WIDTH}x{WORLD_HEIGHT} world, {NUM_EPISODES} episodes")
+    print(f"Pit Probability: {PIT_PROBABILITY}, Allow Climb Without Gold: {ALLOW_CLIMB_WITHOUT_GOLD}")
+    print(f"Agent: NaiveAgent (uniform random action selection)")
+    if verbose:
+        print("Output Mode: Verbose (per-turn visualization)")
+    else:
+        print("Output Mode: Summary (episode summaries only)")
+    print("=" * 70 + "\n")
+    
+    # Run episodes
+    results = []
+    for episode_num in range(NUM_EPISODES):
+        # Create new environment and agent for each episode
+        env = WumpusWorld(
+            width=WORLD_WIDTH,
+            height=WORLD_HEIGHT,
+            allow_climb_without_gold=ALLOW_CLIMB_WITHOUT_GOLD,
+            pit_probability=PIT_PROBABILITY,
+        )
+        agent = NaiveAgent()
+        
+        # Optional visualizer
+        visualizer = Visualizer(WORLD_WIDTH, WORLD_HEIGHT) if verbose else None
+        
+        # Run episode
+        result = run_episode(agent, env, visualizer=visualizer, verbose=verbose)
+        results.append(result)
+        
+        # Print episode summary
+        status = "ESCAPED" if result["escaped"] else ("DIED" if result["died"] else "TIMEOUT")
+        print(
+            f"Episode {episode_num + 1:2d}: "
+            f"Steps={result['turns_taken']:3d} | "
+            f"Reward={result['total_reward']:7.0f} | "
+            f"Gold={str(result['gold_collected']):5s} | "
+            f"{status}"
+        )
+    
+    # Print aggregate statistics
+    print("\n" + "=" * 70)
+    print("AGGREGATE STATISTICS")
+    print("=" * 70)
+    
+    total_reward = sum(r["total_reward"] for r in results)
+    total_steps = sum(r["turns_taken"] for r in results)
+    escapes = sum(1 for r in results if r["escaped"])
+    deaths = sum(1 for r in results if r["died"])
+    gold_collected = sum(1 for r in results if r["gold_collected"])
+    
+    print(f"Total Episodes: {NUM_EPISODES}")
+    print(f"Successful Escapes: {escapes}/{NUM_EPISODES} ({100*escapes/NUM_EPISODES:.1f}%)")
+    print(f"Deaths: {deaths}/{NUM_EPISODES} ({100*deaths/NUM_EPISODES:.1f}%)")
+    print(f"Gold Collected: {gold_collected}/{NUM_EPISODES} ({100*gold_collected/NUM_EPISODES:.1f}%)")
+    print(f"Total Reward: {total_reward:.0f}")
+    print(f"Average Reward per Episode: {total_reward/NUM_EPISODES:.1f}")
+    print(f"Average Steps per Episode: {total_steps/NUM_EPISODES:.1f}")
+    print("=" * 70 + "\n")
 
 
 if __name__ == "__main__":
