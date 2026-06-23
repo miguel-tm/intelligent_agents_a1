@@ -51,6 +51,7 @@ class Visualizer:
         turn: int = 0,
         alive: bool = True,
         total_reward: int = 0,
+        death_cause: str | None = None,
     ) -> None:
         """
         Render the current game state to console output.
@@ -61,6 +62,7 @@ class Visualizer:
             turn: Current turn number (for display purposes)
             alive: Whether the agent is still alive
             total_reward: Cumulative reward so far in the episode
+            death_cause: Cause of death ("Wumpus" or "Pit") if applicable
             
         Displayed information:
         - Grid with agent position and direction arrow
@@ -69,7 +71,12 @@ class Visualizer:
         - Game status
         """
         # Header with turn and status
-        status = "Alive" if alive else "Dead"
+        if alive:
+            status = "Alive"
+        elif death_cause:
+            status = f"Dead (killed by {death_cause})"
+        else:
+            status = "Dead"
         print(f"\n{'-' * 60}")
         print(f"Turn {turn} | Status: {status} | Position: {agent_state.position}")
         print(f"{'-' * 60}")

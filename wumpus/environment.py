@@ -331,3 +331,26 @@ class WumpusWorld:
         if self._agent_direction is None:
             raise RuntimeError("Agent direction not initialized")
         return self._agent_direction
+
+    def get_death_cause(self) -> str | None:
+        """
+        Return the cause of death if agent is dead.
+        
+        Returns:
+            "Wumpus" if killed by wumpus
+            "Pit" if killed by pit
+            None if agent is still alive
+        """
+        if self.is_agent_alive():
+            return None
+        
+        # Check if agent is at wumpus position
+        if self._wumpus_pos is not None and self._agent_pos == self._wumpus_pos:
+            return "Wumpus"
+        
+        # Check if agent is at pit position
+        if self._agent_pos in self._pit_positions:
+            return "Pit"
+        
+        # Shouldn't reach here, but return None as fallback
+        return None

@@ -94,7 +94,15 @@ def run_episode(
                 has_arrow=current_state.has_arrow,
             )
             print(f"\n  Turn {turns}: Agent takes {action.name.upper()}")
-            visualizer.render(display_state, percept, turn=turns, alive=environment.is_agent_alive(), total_reward=total_reward)
+            death_cause = None if environment.is_agent_alive() else environment.get_death_cause()
+            visualizer.render(
+                display_state,
+                percept,
+                turn=turns,
+                alive=environment.is_agent_alive(),
+                total_reward=total_reward,
+                death_cause=death_cause,
+            )
         
         # Detect episode termination conditions
         if percept.reward == 1000:  # Escaped with gold
