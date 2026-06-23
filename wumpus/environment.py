@@ -16,8 +16,9 @@ Key class:
 - WumpusWorld: Main environment manager
 """
 
+import random
 from dataclasses import dataclass
-from typing import Set, Tuple
+from typing import List, Set, Tuple
 from wumpus.models import Action, Direction, Position, Percept, AgentState
 
 
@@ -95,17 +96,47 @@ class WumpusWorld:
         Initialize the world with random wumpus, gold, and pit placements.
         
         Placement rules:
-        - Wumpus: Random position in non-start squares
-        - Gold: Random position in non-start squares
+        - Wumpus: Uniformly random from non-start squares (use random.choice())
+        - Gold: Uniformly random from non-start squares (use random.choice())
         - Pits: Each non-start square has pit_probability chance of containing a pit
         - Wumpus, gold, and pits may overlap
         
-        Agent starts at [1,1] facing right (EAST).
+        Agent starts at [1,1] (or [0,0] internally) facing right (EAST).
         
-        TODO: Implement world initialization with random placements
+        Coordinate system: Internal uses [0,0] at bottom-left for array simplicity.
         """
-        # TODO: Implement
-        pass
+        # Create list of all non-start positions
+        non_start_positions = [
+            Position(x, y)
+            for x in range(self.width)
+            for y in range(self.height)
+            if not self._is_start_position(Position(x, y))
+        ]
+        
+        # Place wumpus: uniformly random from non-start squares
+        self._wumpus_pos = random.choice(non_start_positions)
+        
+        # Place gold: uniformly random from non-start squares
+        self._gold_pos = random.choice(non_start_positions)
+        
+        # Generate pits: each non-start square independently has pitProb chance
+        self._pit_positions = set()
+        for pos in non_start_positions:
+            if random.random() < self.pit_probability:
+                self._pit_positions.add(pos)
+        
+        # Initialize agent at start position facing EAST
+        self._agent_pos = Position(0, 0)  # Internal coordinates
+        self._agent_direction = Direction.EAST
+        self._arrow_used = False
+        
+        # Reset episode flags
+        self._episode_ended = False
+        self._agent_dead = False
+
+    def _is_start_position(self, pos: Position) -> bool:
+        """Check if a position is the starting position [1,1] (or [0,0] internally)."""
+        return pos.x == 0 and pos.y == 0
 
     def reset(self) -> AgentState:
         """
@@ -113,11 +144,15 @@ class WumpusWorld:
         
         Returns:
             AgentState representing the agent's initial state (position [1,1], facing EAST)
-            
-        TODO: Implement reset logic
         """
-        # TODO: Implement
-        pass
+        self._initialize_world()
+        return AgentState(
+            position=Position(1, 1),  # Return UI coordinates
+            direction=Direction.EAST,
+            has_gold=False,
+            is_alive=True,
+            has_arrow=True,
+        )
 
     def step(self, action: Action) -> Tuple[Percept, bool]:
         """
@@ -130,76 +165,140 @@ class WumpusWorld:
             Tuple of:
             - Percept: Sensory information (stench, breeze, glitter, bump, scream, reward)
             - bool: True if episode has ended (agent dead or climbed out), False otherwise
-            
-        Action effects:
-        - FORWARD: Move one step forward (if within bounds)
-        - TURN_LEFT: Rotate direction (no position change)
-        - TURN_RIGHT: Rotate direction (no position change)
-        - SHOOT: Fire arrow in facing direction (kills wumpus if hit)
-        - GRAB: Pick up gold at current location
-        - CLIMB: Exit environment (only at [1,1], returns success/failure)
-        
-        TODO: Implement action execution and state updates
         """
-        # TODO: Implement
-        pass
+        if self._episode_ended:
+            # Episode already ended, return empty percept
+            return Percept(reward=-1), True
+        
+        bump = False
+        scream = False
+        reward = -1  # Default time cost
+        
+        # Execute action
+        if action == Action.FORWARD:
+            # Try to move forward
+            next_pos = self._agent_direction.get_forward_position(self._agent_pos)
+            if next_pos.is_valid(self.width, self.height):
+                self._agent_pos = next_pos
+                # Check if died
+                if self._check_death_condition(self._agent_pos):
+                    self._agent_dead = True
+                    self._episode_ended = True
+                    reward = -10
+            else:
+                bump = True
+        
+        elif action == Action.TURN_LEFT:
+            self._agent_direction = self._agent_direction.turn_left()
+        
+        elif action == Action.TURN_RIGHT:
+            self._agent_direction = self._agent_direction.turn_right()
+        
+        elif action == Action.SHOOT:
+            if not self._arrow_used:
+                self._arrow_used = True
+                # Check if arrow hits wumpus
+                if self._wumpus_in_direction(self._agent_direction):
+                    self._wumpus_pos = None  # Wumpus is dead
+                    scream = True
+                    reward = 0  # No reward for killing wumpus
+        
+        elif action == Action.GRAB:
+            if self._agent_pos == self._gold_pos:
+                self._gold_pos = None  # Gold picked up
+                reward = 1
+        
+        elif action == Action.CLIMB:
+            if self._is_start_position(self._agent_pos):
+                # Can climb out at [1,1]
+                self._episode_ended = True
+                if self._gold_pos is None:
+                    # Agent had gold
+                    reward = 1000
+                elif self.allow_climb_without_gold:
+                    reward = 0
+                else:
+                    reward = -1  # Just time penalty
+            # else: climb fails silently, no effect
+        
+        # Generate percept at current position
+        percept = self.get_percepts_at(self._agent_pos)
+        percept.bump = bump
+        percept.scream = scream
+        percept.reward = reward
+        
+        return percept, self._episode_ended
 
     def get_percepts_at(self, position: Position) -> Percept:
         """
         Generate the percept sensed at a given position.
         
-        This is the core sensing function. It detects:
-        - Stench: If wumpus is in an adjacent square
+        Detects:
+        - Stench: If wumpus is in an adjacent square and alive
         - Breeze: If a pit is in an adjacent square
         - Glitter: If gold is at this position
-        - Bump: Not generated here (set by step() when movement is blocked)
-        - Scream: Not generated here (set by step() when wumpus is killed)
-        - Reward: Computed based on action and outcome
+        - Bump: Set by step() when movement is blocked
+        - Scream: Set by step() when wumpus is killed
+        - Reward: Set by step() based on action outcome
         
         Args:
             position: The position to sense from
             
         Returns:
             Percept object with sensory data
-            
-        TODO: Implement sensory detection
         """
-        # TODO: Implement
-        pass
+        stench = False
+        breeze = False
+        glitter = False
+        
+        # Stench: wumpus is adjacent and alive
+        if self._wumpus_pos is not None and self._is_adjacent(position, self._wumpus_pos):
+            stench = True
+        
+        # Breeze: any pit is adjacent
+        for pit_pos in self._pit_positions:
+            if self._is_adjacent(position, pit_pos):
+                breeze = True
+                break
+        
+        # Glitter: gold is at this position
+        if self._gold_pos is not None and position == self._gold_pos:
+            glitter = True
+        
+        return Percept(stench=stench, breeze=breeze, glitter=glitter)
 
     def _is_adjacent(self, pos1: Position, pos2: Position) -> bool:
         """
         Check if two positions are adjacent (Manhattan distance = 1).
         
         Adjacent means horizontally or vertically neighboring, not diagonally.
-        
-        TODO: Implement adjacency check
         """
-        # TODO: Implement
-        pass
+        return abs(pos1.x - pos2.x) + abs(pos1.y - pos2.y) == 1
 
-    def _compute_reward(self, action: Action, outcome: str) -> float:
-        """
-        Compute the reward for an action based on the outcome.
+    def _check_death_condition(self, pos: Position) -> bool:
+        """Check if agent dies at this position (pit or living wumpus)."""
+        if pos in self._pit_positions:
+            return True
+        if self._wumpus_pos is not None and pos == self._wumpus_pos:
+            return True
+        return False
+
+    def _wumpus_in_direction(self, direction: Direction) -> bool:
+        """Check if wumpus is in the given direction (in straight line from agent)."""
+        if self._wumpus_pos is None:
+            return False
         
-        Standard rewards (may be customized):
-        - Each action: -1
-        - Grabbing gold: +1 (or more)
-        - Death (pit/wumpus): -10
-        - Climbing with gold at [1,1]: +1000
-        - Climbing without gold: 0 (or negative)
+        # Get all positions in the given direction until edge
+        positions_in_direction = []
+        current_pos = self._agent_pos
         
-        Args:
-            action: The action taken
-            outcome: String describing the outcome ("success", "pit", "wumpus", etc.)
-            
-        Returns:
-            Reward value
-            
-        TODO: Implement reward computation
-        """
-        # TODO: Implement
-        pass
+        while True:
+            current_pos = direction.get_forward_position(current_pos)
+            if not current_pos.is_valid(self.width, self.height):
+                break
+            positions_in_direction.append(current_pos)
+        
+        return self._wumpus_pos in positions_in_direction
 
     def is_episode_ended(self) -> bool:
         """Return True if episode has ended (death or escape)."""
