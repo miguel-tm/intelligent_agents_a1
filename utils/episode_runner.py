@@ -8,12 +8,70 @@ from wumpus import WumpusWorld, Visualizer
 from wumpus.models import Action, Percept, AgentState, Position
 
 
+def _percept_to_dict(percept: Percept) -> dict:
+    """Convert a Percept into a plain dict (for history snapshots / serialization)."""
+    return {
+        "stench": percept.stench,
+        "breeze": percept.breeze,
+        "glitter": percept.glitter,
+        "bump": percept.bump,
+        "scream": percept.scream,
+        "reward": percept.reward,
+    }
+
+
+def _make_snapshot(
+    turn: int,
+    action_name: str | None,
+    user_position: tuple[int, int],
+    direction_name: str,
+    percept: Percept,
+    total_reward: float,
+    alive: bool,
+    death_cause: str | None,
+    has_gold: bool,
+    has_arrow: bool,
+) -> dict:
+    """Build a single per-turn snapshot dict for the episode history."""
+    return {
+        "turn": turn,
+        "action": action_name,
+        "position": user_position,  # user coordinates [1,1]..[width,height]
+        "direction": direction_name,
+        "percept": _percept_to_dict(percept),
+        "reward": percept.reward,
+        "total_reward": total_reward,
+        "alive": alive,
+        "death_cause": death_cause,
+        "has_gold": has_gold,
+        "has_arrow": has_arrow,
+    }
+
+
+def _capture_world_layout(environment: WumpusWorld) -> dict:
+    """Capture the true (hidden) world layout in user coordinates.
+
+    For visualization/debugging overlays only; agents never receive this.
+    """
+    wumpus = environment.get_wumpus_position()
+    gold = environment.get_gold_position()
+    pits = environment.get_pit_positions()
+    return {
+        "width": environment.width,
+        "height": environment.height,
+        "wumpus": (wumpus.x + 1, wumpus.y + 1) if wumpus is not None else None,
+        "gold": (gold.x + 1, gold.y + 1) if gold is not None else None,
+        "pits": sorted((p.x + 1, p.y + 1) for p in pits),
+    }
+
+
 def run_episode(
     agent,
     environment: WumpusWorld,
     visualizer: Visualizer | None = None,
     max_turns: int = 1000,
     verbose: bool = True,
+    record_history: bool = False,
 ) -> dict:
     """
     Run a single episode of the Wumpus World game.
@@ -28,6 +86,10 @@ def run_episode(
         visualizer: Optional Visualizer for rendering (None = no visualization)
         max_turns: Maximum number of turns before forcing episode end
         verbose: If True, print turn information and enable visualization
+        record_history: If True, capture a per-turn snapshot trace and the true
+            world layout for later replay (e.g., the Streamlit web UI). Adds
+            "history" and "world_layout" keys to the returned dict. Defaults to
+            False so existing CLI behavior is unchanged.
         
     Returns:
         Dictionary with episode statistics:
@@ -36,6 +98,9 @@ def run_episode(
         - gold_collected: Whether agent found and grabbed gold
         - escaped: Whether agent escaped (with or without gold)
         - died: Whether agent died (pit or wumpus)
+        When record_history is True, also includes:
+        - history: List of per-turn snapshot dicts (turn 0 = initial state)
+        - world_layout: Hidden world layout in user coordinates (debug/overlay)
         
     Episode Termination Conditions:
         - Reward == 1000: Escaped with gold at [1,1]
@@ -54,6 +119,27 @@ def run_episode(
     escaped = False
     died = False
     has_arrow = True  # Agent starts with arrow
+
+    # Optional history capture (for Streamlit replay / debugging)
+    history: list[dict] = []
+    world_layout: dict | None = None
+    if record_history:
+        world_layout = _capture_world_layout(environment)
+        # Turn 0: initial state (agent at [1,1] facing EAST, empty percept)
+        history.append(
+            _make_snapshot(
+                turn=0,
+                action_name=None,
+                user_position=(1, 1),
+                direction_name=environment.get_agent_direction().name,
+                percept=percept,
+                total_reward=0,
+                alive=True,
+                death_cause=None,
+                has_gold=False,
+                has_arrow=True,
+            )
+        )
     
     # Display initial state (Turn 0) if verbose
     if verbose and visualizer is not None:
@@ -90,6 +176,28 @@ def run_episode(
             has_arrow = False
         if percept.glitter and not gold_collected:
             gold_collected = True
+
+        # Resolve current alive/death state once for reuse below
+        alive = environment.is_agent_alive()
+        death_cause = None if alive else environment.get_death_cause()
+
+        # Capture per-turn snapshot if recording history
+        if record_history:
+            current_pos = environment.get_agent_position()
+            history.append(
+                _make_snapshot(
+                    turn=turns,
+                    action_name=action.name,
+                    user_position=(current_pos.x + 1, current_pos.y + 1),
+                    direction_name=environment.get_agent_direction().name,
+                    percept=percept,
+                    total_reward=total_reward,
+                    alive=alive,
+                    death_cause=death_cause,
+                    has_gold=gold_collected,
+                    has_arrow=has_arrow,
+                )
+            )
         
         # Render turn state if visualization enabled
         if verbose and visualizer is not None:
@@ -97,7 +205,7 @@ def run_episode(
                 position=environment.get_agent_position(),
                 direction=environment.get_agent_direction(),
                 has_gold=gold_collected,
-                is_alive=environment.is_agent_alive(),
+                is_alive=alive,
                 has_arrow=has_arrow,
             )
             # Convert internal coordinates [0,0] to user coordinates [1,1]
@@ -113,12 +221,11 @@ def run_episode(
             )
             print(f"\n\n{'-' * 60}")
             print(f"TURN {turns - 1} --> TURN {turns}: Agent takes {action.name.upper()}")
-            death_cause = None if environment.is_agent_alive() else environment.get_death_cause()
             visualizer.render(
                 display_state,
                 percept,
                 turn=turns,
-                alive=environment.is_agent_alive(),
+                alive=alive,
                 total_reward=total_reward,
                 death_cause=death_cause,
             )
@@ -140,10 +247,14 @@ def run_episode(
                 died = True
             break
     
-    return {
+    result = {
         "total_reward": total_reward,
         "turns_taken": turns,
         "gold_collected": gold_collected,
         "escaped": escaped,
         "died": died,
     }
+    if record_history:
+        result["history"] = history
+        result["world_layout"] = world_layout
+    return result

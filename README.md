@@ -27,7 +27,8 @@ intelligent_agents_a1/
 │
 ├── README.md                      # This file
 ├── requirements.txt               # Python dependencies
-├── main.py                        # Entry point for running the simulator
+├── main.py                        # CLI entry point (ASCII visualization)
+├── streamlit_app.py               # Web entry point (advanced visualization)
 │
 ├── docs/
 │   └── assignment1_requirements.md  # Detailed assignment specification
@@ -43,6 +44,11 @@ intelligent_agents_a1/
 │   ├── __init__.py               # Package exports
 │   ├── base_agent.py             # Abstract Agent class (enforces percept-only interface)
 │   └── naive_agent.py            # NaiveAgent (random action selection)
+│
+├── utils/                         # Shared utilities
+│   ├── __init__.py               # Package exports
+│   ├── episode_runner.py         # Shared episode loop (CLI + web)
+│   └── streamlit_render.py       # HTML/CSS board rendering for the web UI
 │
 └── tests/                         # Test suite
     ├── __init__.py                # Test package
@@ -61,7 +67,10 @@ intelligent_agents_a1/
 | **visualization.py** | `Visualizer` class—renders game state (grid, agent, percepts) |
 | **base_agent.py** | Abstract `Agent` class—interface ensuring agents only see percepts |
 | **naive_agent.py** | `NaiveAgent` implementation—uniform random action selection |
-| **main.py** | Entry point—game loop, episode management, visualization integration |
+| **episode_runner.py** | `run_episode()`—shared game loop used by both the CLI and web UI |
+| **streamlit_render.py** | HTML/CSS grid rendering helpers for the Streamlit UI |
+| **main.py** | CLI entry point—game loop, episode management, ASCII visualization |
+| **streamlit_app.py** | Web entry point—interactive replay and statistics dashboard |
 
 ---
 
@@ -111,6 +120,25 @@ This runs a standard game:
 python main.py --verbose
 ```
 - Visualization (ASCII grid) displayed for each turn
+
+### Run the advanced web visualization (Streamlit)
+The ASCII CLI above remains available for debugging and history. For a richer,
+interactive experience, launch the Streamlit app:
+```bash
+streamlit run streamlit_app.py
+```
+Features:
+- **Replay tab:** generate a single episode and step through it turn by turn
+  (First / Prev / Next / Last, slider scrub) on a graphical emoji grid.
+- **Statistics tab:** run many episodes and view aggregate metrics
+  (escape/death/gold rates, average reward/steps) plus charts and a per-episode table.
+- **Sidebar controls:** world size, pit probability, allow-climb, episode count,
+  max turns, random seed, and a **Reveal hidden world** debug toggle that overlays
+  the true wumpus/gold/pit locations.
+
+> The web UI reuses the exact same `WumpusWorld`, `NaiveAgent`, and `run_episode()`
+> logic as the CLI, so both stay in sync. The "reveal hidden world" overlay is for
+> debugging/teaching only—agents still receive information solely through percepts.
 
 ### Run Tests
 ```bash

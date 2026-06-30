@@ -354,3 +354,40 @@ class WumpusWorld:
         
         # Shouldn't reach here, but return None as fallback
         return None
+
+    def get_wumpus_position(self) -> Position | None:
+        """
+        Return the true wumpus position (internal coordinates).
+        
+        WARNING: This exposes hidden world state. It is intended ONLY for
+        visualization/debugging (e.g., a "reveal hidden world" overlay). Agents
+        must NEVER use this; they receive information solely through Percepts.
+        
+        Returns:
+            The wumpus Position in internal coordinates, or None if uninitialized.
+        """
+        return self._wumpus_pos
+
+    def get_gold_position(self) -> Position | None:
+        """
+        Return the true gold position (internal coordinates).
+        
+        WARNING: Hidden world state, for visualization/debugging only. Agents
+        must NEVER use this; they receive information solely through Percepts.
+        
+        Returns:
+            The gold Position in internal coordinates, or None if uninitialized.
+        """
+        return self._gold_pos
+
+    def get_pit_positions(self) -> Set[Position]:
+        """
+        Return the true set of pit positions (internal coordinates).
+        
+        WARNING: Hidden world state, for visualization/debugging only. Agents
+        must NEVER use this; they receive information solely through Percepts.
+        
+        Returns:
+            A copy of the set of pit Positions in internal coordinates.
+        """
+        return set(self._pit_positions)
