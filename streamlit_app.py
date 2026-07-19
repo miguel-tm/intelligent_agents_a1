@@ -84,7 +84,7 @@ def _run_batch(cfg: dict) -> list[dict]:
 
 def _outcome_label(result: dict) -> str:
     if result["escaped"] and result["gold_collected"]:
-        return "ESCAPED"
+        return "ESCAPED (success!)"
     if result["escaped"]:
         return "ESCAPED (no gold)"
     if result["died"]:
@@ -104,7 +104,7 @@ allow_climb = st.sidebar.checkbox("Allow climb without gold", value=True)
 max_turns = st.sidebar.slider("Max turns", min_value=10, max_value=2000, value=1000, step=10)
 num_episodes = st.sidebar.slider("Episodes (Statistics tab)", min_value=1, max_value=500, value=20)
 
-use_seed = st.sidebar.checkbox("Use fixed random seed", value=True)
+use_seed = st.sidebar.checkbox("Use fixed random seed", value=False)
 seed_value = st.sidebar.number_input("Seed", min_value=0, max_value=10_000_000, value=42, step=1)
 reveal_hidden = st.sidebar.checkbox("Reveal hidden world (debug)", value=False)
 
